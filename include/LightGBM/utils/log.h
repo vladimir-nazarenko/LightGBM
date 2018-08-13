@@ -14,7 +14,15 @@ namespace LightGBM {
 #if defined(_MSC_VER)
 #define THREAD_LOCAL __declspec(thread) 
 #else
-#define THREAD_LOCAL __thread
+#ifdef __GNUC__
+  #include <features.h>
+  #if __GNUC_PREREQ(4,8)
+    #define THREAD_LOCAL thread_local
+  #else
+    #define THREAD_LOCAL __thread
+  #endif
+#endif
+
 #endif
 
 #ifndef CHECK
