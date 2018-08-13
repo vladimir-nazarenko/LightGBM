@@ -14,7 +14,7 @@ namespace LightGBM {
 #if defined(_MSC_VER)
 #define THREAD_LOCAL __declspec(thread) 
 #else
-#define THREAD_LOCAL thread_local
+#define THREAD_LOCAL __thread
 #endif
 
 #ifndef CHECK
@@ -86,7 +86,8 @@ public:
 private:
 
   static void Write(LogLevel level, const char* level_str, const char *format, va_list val) {
-    if (level <= GetLevel()) {  // omit the message with low level
+    LogLevel current_level = GetLevel();
+    if ((int)level <= (int)current_level) {  // omit the message with low level
       // write to STDOUT
       printf("[LightGBM] [%s] ", level_str);
       vprintf(format, val);

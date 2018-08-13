@@ -1,7 +1,8 @@
 #ifndef LIGHTGBM_C_API_H_
 #define LIGHTGBM_C_API_H_
 
-#include <LightGBM/meta.h>
+// #include <LightGBM/meta.h>
+#include <LightGBM/utils/log.h>
 
 #include <cstdint>
 #include <exception>
