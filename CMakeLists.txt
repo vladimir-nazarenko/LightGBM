@@ -162,55 +162,55 @@ file(GLOB SOURCES
 )
 
 # add_executable(lightgbm src/main.cpp ${SOURCES})
-add_library(_lightgbm SHARED src/c_api.cpp  ${SOURCES})
-target_link_libraries(_lightgbm -static-libstdc++ -Wl,--exclude-libs,ALL -Wl,--version-script=${CMAKE_SOURCE_DIR}/_lightgbm.lds)
+add_library(lightgbm SHARED src/c_api.cpp  ${SOURCES})
+target_link_libraries(lightgbm -static-libstdc++ -Wl,--exclude-libs,ALL -Wl,--version-script=${CMAKE_SOURCE_DIR}/lightgbm.lds)
 
 if(USE_SWIG)
   set_property(SOURCE swig/lightgbmlib.i PROPERTY CPLUSPLUS ON)
   LIST(APPEND swig_options -package com.microsoft.ml.lightgbm)
   set_property(SOURCE swig/lightgbmlib.i PROPERTY SWIG_FLAGS "${swig_options}")
-  swig_add_module(_lightgbm_swig java swig/lightgbmlib.i)
-  swig_link_libraries(_lightgbm_swig _lightgbm)
-  add_custom_command(TARGET _lightgbm_swig POST_BUILD
+  swig_add_module(lightgbm_swig java swig/lightgbmlib.i)
+  swig_link_libraries(lightgbm_swig lightgbm)
+  add_custom_command(TARGET lightgbm_swig POST_BUILD
     COMMAND "${Java_JAVAC_EXECUTABLE}" -d . java/*.java
     COMMAND cp "${PROJECT_SOURCE_DIR}/*.so" com/microsoft/ml/lightgbm/linux/x86_64
     COMMAND "${Java_JAR_EXECUTABLE}" -cf lightgbmlib.jar com)
 endif(USE_SWIG)
 
 if(MSVC)
-    set_target_properties(_lightgbm PROPERTIES OUTPUT_NAME "lib_lightgbm")
+    set_target_properties(lightgbm PROPERTIES OUTPUT_NAME "liblightgbm")
 endif(MSVC)
 
 if(USE_MPI)
 #   TARGET_LINK_LIBRARIES(lightgbm ${MPI_CXX_LIBRARIES})
-  TARGET_LINK_LIBRARIES(_lightgbm ${MPI_CXX_LIBRARIES})
+  TARGET_LINK_LIBRARIES(lightgbm ${MPI_CXX_LIBRARIES})
 endif(USE_MPI)
 
 if(USE_OPENMP)
     if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
         # TARGET_LINK_LIBRARIES(lightgbm ${OpenMP_libomp_LIBRARY})
-        TARGET_LINK_LIBRARIES(_lightgbm ${OpenMP_libomp_LIBRARY})
+        TARGET_LINK_LIBRARIES(lightgbm ${OpenMP_libomp_LIBRARY})
     endif()
 endif(USE_OPENMP)
 
 if(USE_GPU)
 #   TARGET_LINK_LIBRARIES(lightgbm ${OpenCL_LIBRARY} ${Boost_LIBRARIES})
-  TARGET_LINK_LIBRARIES(_lightgbm ${OpenCL_LIBRARY} ${Boost_LIBRARIES})
+  TARGET_LINK_LIBRARIES(lightgbm ${OpenCL_LIBRARY} ${Boost_LIBRARIES})
 endif(USE_GPU)
 
 if(USE_HDFS)
+#  TARGET_LINK_LIBRARIES(lightgbm ${HDFS_CXX_LIBRARIES})
   TARGET_LINK_LIBRARIES(lightgbm ${HDFS_CXX_LIBRARIES})
-  TARGET_LINK_LIBRARIES(_lightgbm ${HDFS_CXX_LIBRARIES})
 endif(USE_HDFS)
 
 if(WIN32 AND (MINGW OR CYGWIN))
     # TARGET_LINK_LIBRARIES(lightgbm Ws2_32)
-    TARGET_LINK_LIBRARIES(_lightgbm Ws2_32)
+    TARGET_LINK_LIBRARIES(lightgbm Ws2_32)
     # TARGET_LINK_LIBRARIES(lightgbm IPHLPAPI)
-    TARGET_LINK_LIBRARIES(_lightgbm IPHLPAPI)
+    TARGET_LINK_LIBRARIES(lightgbm IPHLPAPI)
 endif()
 
-install(TARGETS _lightgbm
+install(TARGETS lightgbm
         RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
         LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
         ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)
