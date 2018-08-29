@@ -7,12 +7,17 @@
 #include <cmath>
 
 namespace LightGBM {
+
+template <typename T>
+bool _is_greater_than_zero(const T val) {
+  return val > 0;
+}
 /*!
 * \brief Objective function for binary classification
 */
 class BinaryLogloss: public ObjectiveFunction {
 public:
-  explicit BinaryLogloss(const Config& config, std::function<bool(label_t)> is_pos = nullptr) {
+  explicit BinaryLogloss(const Config& config, std::function<bool(label_t)> is_pos = 0) {
     sigmoid_ = static_cast<double>(config.sigmoid);
     if (sigmoid_ <= 0.0) {
       Log::Fatal("Sigmoid parameter %f should be greater than zero", sigmoid_);
@@ -23,14 +28,15 @@ public:
       Log::Fatal("Cannot set is_unbalance and scale_pos_weight at the same time");
     }
     is_pos_ = is_pos;
-    if (is_pos_ == nullptr) {
-      is_pos_ = [](label_t label) {return label > 0; };
+    if (is_pos_ == 0) {
+      is_pos_ = _is_greater_than_zero<label_t>;
     }
   }
 
   explicit BinaryLogloss(const std::vector<std::string>& strs) {
     sigmoid_ = -1;
-    for (auto str : strs) {
+    for (auto strs_it = strs.begin(); strs_it != strs.end(); ++strs_it) {
+      const auto &str = *strs_it;
       auto tokens = Common::Split(str.c_str(), ':');
       if (tokens.size() == 2) {
         if (tokens[0] == std::string("sigmoid")) {

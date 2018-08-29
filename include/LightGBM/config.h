@@ -923,7 +923,8 @@ inline bool Config::GetBool(
 struct ParameterAlias {
   static void KeyAliasTransform(std::unordered_map<std::string, std::string>* params) {
     std::unordered_map<std::string, std::string> tmp_map;
-    for (const auto& pair : *params) {
+    for (auto param_it = params->begin(); param_it != params->end(); ++param_it) {
+      const auto& pair = *param_it;
       auto alias = Config::alias_table.find(pair.first);
       if (alias != Config::alias_table.end()) { // found alias
         auto alias_set = tmp_map.find(alias->second);

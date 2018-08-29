@@ -21,7 +21,8 @@ public:
 
   explicit MulticlassSoftmax(const std::vector<std::string>& strs) {
     num_class_ = -1;
-    for (auto str : strs) {
+    for (auto str_it = strs.begin(); str_it != strs.end(); ++str_it) {
+      const auto &str = *str_it;
       auto tokens = Common::Split(str.c_str(), ':');
       if (tokens.size() == 2) {
         if (tokens[0] == std::string("num_class")) {
@@ -131,6 +132,20 @@ private:
   const label_t* weights_;
 };
 
+template <typename T, typename U>
+struct _is_equal_to_func {
+	_is_equal_to_func(const T pattern)
+		: pattern_(pattern)
+	{}
+
+	bool operator() (const U val)
+	{
+		return static_cast<T>(val) == pattern_;
+	}
+private:
+	T pattern_;
+};
+
 /*!
 * \brief Objective function for multiclass classification, use one-vs-all binary objective function
 */
@@ -140,7 +155,7 @@ public:
     num_class_ = config.num_class;
     for (int i = 0; i < num_class_; ++i) {
       binary_loss_.emplace_back(
-        new BinaryLogloss(config, [i](label_t label) { return static_cast<int>(label) == i; }));
+        new BinaryLogloss(config, _is_equal_to_func<int, label_t>(i)));
     }
     sigmoid_ = config.sigmoid;
   }
@@ -148,7 +163,8 @@ public:
   explicit MulticlassOVA(const std::vector<std::string>& strs) {
     num_class_ = -1;
     sigmoid_ = -1;
-    for (auto str : strs) {
+    for (auto strs_it = strs.begin(); strs_it != strs.end(); ++strs_it) {
+      const auto &str = *strs_it;
       auto tokens = Common::Split(str.c_str(), ':');
       if (tokens.size() == 2) {
         if (tokens[0] == std::string("num_class")) {

@@ -9,6 +9,9 @@
 #include <memory>
 
 #define override
+#if __GNUC__
+#define nullptr ((void *)0)
+#endif
 
 namespace LightGBM {
 

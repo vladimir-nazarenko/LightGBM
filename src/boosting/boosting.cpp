@@ -8,10 +8,10 @@ Boosting* Boosting::CreateBoosting(const std::string& type, const char* filename
     if (type == std::string("gbdt")) {
       return new GBDT();
     } else {
-      return nullptr;
+      return 0;
     }
   } else {
-    return nullptr;
+    return 0;
   }
 }
 

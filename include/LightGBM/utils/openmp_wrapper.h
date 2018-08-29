@@ -8,32 +8,39 @@
 #include <mutex>
 #include <vector>
 #include <memory>
+#include <boost/thread/mutex.hpp>
+#include <boost/exception_ptr.hpp>
 #include "log.h"
+
+#if __GNUC__
+#define nullptr ((void *)0)
+#endif
 
 class ThreadExceptionHelper {
 public:
   ThreadExceptionHelper() { 
-    ex_ptr_ = nullptr; 
+    ex_ptr_ = empty_ptr_;
   }
 
   ~ThreadExceptionHelper() { 
     ReThrow();
   }
   void ReThrow() {
-    if (ex_ptr_ != nullptr) {
-      std::rethrow_exception(ex_ptr_);
+    if (ex_ptr_ != empty_ptr_) {
+      boost::rethrow_exception(ex_ptr_);
     }
   }
   void CaptureException() {
     // only catch first exception.
-    if (ex_ptr_ != nullptr) { return; }
-    std::unique_lock<std::mutex> guard(lock_);
-    if (ex_ptr_ != nullptr) { return; }
-    ex_ptr_ = std::current_exception();
+    if (ex_ptr_ != empty_ptr_) { return; }
+    boost::unique_lock<boost::mutex> guard(lock_);
+    if (ex_ptr_ != empty_ptr_) { return; }
+    ex_ptr_ = boost::current_exception();
   }
 private:
-  std::exception_ptr ex_ptr_;
-  std::mutex lock_;
+  boost::exception_ptr ex_ptr_;
+  const boost::exception_ptr empty_ptr_;
+  boost::mutex lock_;
 };
 
 #define OMP_INIT_EX() ThreadExceptionHelper omp_except_helper

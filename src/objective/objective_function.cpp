@@ -7,10 +7,10 @@ ObjectiveFunction* ObjectiveFunction::CreateObjectiveFunction(const std::string&
   if (type == std::string("multiclass") || type == std::string("softmax")) {
     return new MulticlassSoftmax(config);
   } else if (type == std::string("none") || type == std::string("null") || type == std::string("custom")) {
-    return nullptr;
+    return 0;
   }
   Log::Fatal("Unknown objective type name: %s", type.c_str());
-  return nullptr;
+  return 0;
 }
 
 ObjectiveFunction* ObjectiveFunction::CreateObjectiveFunction(const std::string& str) {
@@ -19,10 +19,10 @@ ObjectiveFunction* ObjectiveFunction::CreateObjectiveFunction(const std::string&
   if (type == std::string("multiclass")) {
     return new MulticlassSoftmax(strs);
   } else if (type == std::string("none") || type == std::string("null") || type == std::string("custom")) {
-    return nullptr;
+    return 0;
   }
   Log::Fatal("Unknown objective type name: %s", type.c_str());
-  return nullptr;
+  return 0;
 }
 
 }  // namespace LightGBM

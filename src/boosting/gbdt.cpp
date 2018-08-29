@@ -27,8 +27,7 @@ std::chrono::duration<double, std::milli> tree_time;
 #endif // TIMETAG
 
 GBDT::GBDT() : iter_(0),
-train_data_(nullptr),
-objective_function_(nullptr),
+objective_function_(0),
 early_stopping_round_(0),
 max_feature_idx_(0),
 num_tree_per_iteration_(1),
@@ -36,7 +35,8 @@ num_class_(1),
 num_iteration_for_pred_(0),
 shrinkage_rate_(0.1f),
 num_init_iteration_(0),
-need_re_bagging_(false) {
+need_re_bagging_(false)
+{
 
   #pragma omp parallel
   #pragma omp master

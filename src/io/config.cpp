@@ -1,7 +1,7 @@
 #include <LightGBM/config.h>
 
 #include <LightGBM/utils/common.h>
-#include <LightGBM/utils/random.h>
+//#include <LightGBM/utils/random.h>
 #include <LightGBM/utils/log.h>
 
 #include <vector>
@@ -35,7 +35,8 @@ void Config::KV2Map(std::unordered_map<std::string, std::string>& params, const 
 std::unordered_map<std::string, std::string> Config::Str2Map(const char* parameters) {
   std::unordered_map<std::string, std::string> params;
   auto args = Common::Split(parameters, " \t\n\r");
-  for (auto arg : args) {
+  for (auto args_it = args.begin(); args_it != args.end(); ++args_it) {
+    const auto &arg = *args_it;
     KV2Map(params, Common::Trim(arg).c_str());
   }
   ParameterAlias::KeyAliasTransform(&params);
@@ -79,16 +80,18 @@ void GetMetricType(const std::unordered_map<std::string, std::string>& params, s
     std::vector<std::string> metrics = Common::Split(value.c_str(), ',');
     // remove duplicate
     std::unordered_set<std::string> metric_sets;
-    for (auto& met : metrics) {
+    for (auto metrics_it = metrics.begin(); metrics_it != metrics.end(); ++metrics_it) {
+      auto& met = *metrics_it;
       std::transform(met.begin(), met.end(), met.begin(), Common::tolower);
       if (metric_sets.count(met) <= 0) {
         metric_sets.insert(met);
       }
     }
-    for (auto& met : metric_sets) {
+    for (auto metric_sets_it = metric_sets.begin(); metric_sets_it != metric_sets.end(); ++metric_sets_it) {
+      auto& met = *metric_sets_it;
       metric->push_back(met);
     }
-    metric->shrink_to_fit();
+//    metric->shrink_to_fit();
   }
   // add names of objective function if not providing metric
   if (metric->empty() && value.size() == 0) {
@@ -154,12 +157,12 @@ void Config::Set(const std::unordered_map<std::string, std::string>& params) {
 
   // generate seeds by seed.
   if (GetInt(params, "seed", &seed)) {
-    Random rand(seed);
-    int int_max = std::numeric_limits<short>::max();
-    data_random_seed = static_cast<int>(rand.NextShort(0, int_max));
-    bagging_seed = static_cast<int>(rand.NextShort(0, int_max));
-    drop_seed = static_cast<int>(rand.NextShort(0, int_max));
-    feature_fraction_seed = static_cast<int>(rand.NextShort(0, int_max));
+//    Random rand(seed);
+//    int int_max = std::numeric_limits<short>::max();
+//    data_random_seed = static_cast<int>(rand.NextShort(0, int_max));
+//    bagging_seed = static_cast<int>(rand.NextShort(0, int_max));
+//    drop_seed = static_cast<int>(rand.NextShort(0, int_max));
+//    feature_fraction_seed = static_cast<int>(rand.NextShort(0, int_max));
   }
 
   GetTaskType(params, &task);
@@ -215,7 +218,8 @@ void Config::CheckParamConflict() {
       Log::Fatal("Number of classes must be 1 for non-multiclass training");
     }
   }
-  for (std::string metric_type : metric) {
+  for (auto metric_it = metric.begin(); metric_it != metric.end(); ++metric_it) {
+    const auto &metric_type = *metric_it;
     bool metric_custom_or_none = metric_type == std::string("none") || metric_type == std::string("null") 
                                  || metric_type == std::string("custom") || metric_type == std::string("na");
     bool metric_type_multiclass = (CheckMultiClassObjective(metric_type)

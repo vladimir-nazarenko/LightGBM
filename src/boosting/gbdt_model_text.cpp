@@ -6,6 +6,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <memory>
 
 namespace LightGBM {
 
@@ -134,7 +135,7 @@ bool GBDT::LoadModelFromString(const char* buffer, size_t len) {
     int num_trees = static_cast<int>(tree_sizes.size());
     for (int i = 0; i < num_trees; ++i) {
       tree_boundries[i + 1] = tree_boundries[i] + tree_sizes[i];
-      models_.emplace_back(nullptr);
+      models_.emplace_back(std::unique_ptr<LightGBM::Tree>());
     }
     OMP_INIT_EX();
     #pragma omp parallel for schedule(static)

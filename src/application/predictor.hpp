@@ -17,11 +17,30 @@
 #include <memory>
 
 namespace LightGBM {
+	class Predictor;
+}
+
+namespace {
+	namespace {
+		class predict_ftor {
+			LightGBM::Predictor *predictor_;
+			const int kFeatureThreshold_;
+			const size_t KSparseThreshold_;
+		public:
+			predict_ftor(LightGBM::Predictor *predictor, const int kFeatureThreshold, const size_t KSparseThreshold);
+
+			void operator() (const std::vector<std::pair<int, double>>& features, double* output);
+		};
+	}
+}
+
+namespace LightGBM {
 
 /*!
 * \brief Used to predict data with input model
 */
 class Predictor {
+	friend class ::predict_ftor;
 public:
   /*!
   * \brief Constructor
@@ -61,46 +80,10 @@ public:
     predict_buf_ = std::vector<std::vector<double>>(num_threads_, std::vector<double>(num_feature_, 0.0f));
     const int kFeatureThreshold = 100000;
     const size_t KSparseThreshold = static_cast<size_t>(0.01 * num_feature_);
-    if (predict_leaf_index) {
-      predict_fun_ = [this, kFeatureThreshold, KSparseThreshold](const std::vector<std::pair<int, double>>& features, double* output) {
-        int tid = omp_get_thread_num();
-        if (num_feature_ > kFeatureThreshold && features.size() < KSparseThreshold) {
-          auto buf = CopyToPredictMap(features);
-          boosting_->PredictLeafIndexByMap(buf, output);
-        } else {
-          CopyToPredictBuffer(predict_buf_[tid].data(), features);
-          // get result for leaf index
-          boosting_->PredictLeafIndex(predict_buf_[tid].data(), output);
-          ClearPredictBuffer(predict_buf_[tid].data(), predict_buf_[tid].size(), features);
-        }
-      };
-    } else {
-      if (is_raw_score) {
-        predict_fun_ = [this, kFeatureThreshold, KSparseThreshold](const std::vector<std::pair<int, double>>& features, double* output) {
-          int tid = omp_get_thread_num();
-          if (num_feature_ > kFeatureThreshold && features.size() < KSparseThreshold) {
-            auto buf = CopyToPredictMap(features);
-            boosting_->PredictRawByMap(buf, output, &early_stop_);
-          } else {
-            CopyToPredictBuffer(predict_buf_[tid].data(), features);
-            boosting_->PredictRaw(predict_buf_[tid].data(), output, &early_stop_);
-            ClearPredictBuffer(predict_buf_[tid].data(), predict_buf_[tid].size(), features);
-          }
-        };
-      } else {
-        predict_fun_ = [this, kFeatureThreshold, KSparseThreshold](const std::vector<std::pair<int, double>>& features, double* output) {
-          int tid = omp_get_thread_num();
-          if (num_feature_ > kFeatureThreshold && features.size() < KSparseThreshold) {
-            auto buf = CopyToPredictMap(features);
-            boosting_->PredictByMap(buf, output, &early_stop_);
-          } else {
-            CopyToPredictBuffer(predict_buf_[tid].data(), features);
-            boosting_->Predict(predict_buf_[tid].data(), output, &early_stop_);
-            ClearPredictBuffer(predict_buf_[tid].data(), predict_buf_[tid].size(), features);
-          }
-        };
-      }
+    if (predict_leaf_index || is_raw_score) {
+    	throw std::runtime_error("This prediction type is not implmented");
     }
+    predict_fun_ = predict_ftor(this, kFeatureThreshold, KSparseThreshold);
   }
 
   /*!
@@ -160,5 +143,23 @@ private:
 };
 
 }  // namespace LightGBM
+
+namespace {
+	predict_ftor::predict_ftor(LightGBM::Predictor *predictor, const int kFeatureThreshold, const size_t KSparseThreshold)
+			: predictor_(predictor), kFeatureThreshold_(kFeatureThreshold), KSparseThreshold_(KSparseThreshold)
+	{}
+
+	void predict_ftor::operator() (const std::vector<std::pair<int, double>>& features, double* output) {
+		int tid = omp_get_thread_num();
+		if (predictor_->num_feature_ > kFeatureThreshold_ && features.size() < KSparseThreshold_) {
+			auto buf = predictor_->CopyToPredictMap(features);
+			predictor_->boosting_->PredictByMap(buf, output, &predictor_->early_stop_);
+		} else {
+			predictor_->CopyToPredictBuffer(predictor_->predict_buf_[tid].data(), features);
+			predictor_->boosting_->Predict (predictor_->predict_buf_[tid].data(), output, &predictor_->early_stop_);
+			predictor_->ClearPredictBuffer (predictor_->predict_buf_[tid].data(), predictor_->predict_buf_[tid].size(), features);
+		}
+	}
+}
 
 #endif   // LightGBM_PREDICTOR_HPP_

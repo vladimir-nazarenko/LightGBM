@@ -478,7 +478,8 @@ inline static std::vector<T> StringToArray(const std::string& str, char delimite
   std::vector<T> ret;
   ret.reserve(strs.size());
   __StringToTHelper<T, std::is_floating_point<T>::value> helper;
-  for (const auto& s : strs) {
+  for (auto strs_it = strs.begin(); strs_it != strs.end(); ++strs_it) {
+    const auto& s = *strs_it;
     ret.push_back(helper(s));
   }
   return ret;
@@ -494,7 +495,8 @@ inline static std::vector<T> StringToArray(const std::string& str, int n) {
   std::vector<T> ret;
   ret.reserve(strs.size());
   __StringToTHelper<T, std::is_floating_point<T>::value> helper;
-  for (const auto& s : strs) {
+  for (auto strs_it = strs.begin(); strs_it != strs.end(); ++strs_it) {
+    const auto& s = *strs_it;
     ret.push_back(helper(s));
   }
   return ret;
@@ -618,6 +620,18 @@ std::vector<const T*> ConstPtrInVectorWrapper(const std::vector<std::unique_ptr<
   return ret;
 }
 
+template <typename T1, typename T2>
+bool pair_order_asc(const std::pair<T1, T2>& a, const std::pair<T1, T2>& b)
+{
+  return a.first < b.first;
+}
+
+template <typename T1, typename T2>
+bool pair_order_dsc(const std::pair<T1, T2>& a, const std::pair<T1, T2>& b)
+{
+  return a.first > b.first;
+}
+
 template<typename T1, typename T2>
 inline static void SortForPair(std::vector<T1>& keys, std::vector<T2>& values, size_t start, bool is_reverse = false) {
   std::vector<std::pair<T1, T2>> arr;
@@ -625,13 +639,9 @@ inline static void SortForPair(std::vector<T1>& keys, std::vector<T2>& values, s
     arr.emplace_back(keys[i], values[i]);
   }
   if (!is_reverse) {
-    std::sort(arr.begin(), arr.end(), [](const std::pair<T1, T2>& a, const std::pair<T1, T2>& b) {
-      return a.first < b.first;
-    });
+    std::sort(arr.begin(), arr.end(), pair_order_asc);
   } else {
-    std::sort(arr.begin(), arr.end(), [](const std::pair<T1, T2>& a, const std::pair<T1, T2>& b) {
-      return a.first > b.first;
-    });
+    std::sort(arr.begin(), arr.end(), pair_order_dsc);
   }
   for (size_t i = start; i < arr.size(); ++i) {
     keys[i] = arr[i].first;
@@ -735,14 +745,32 @@ static void ParallelSort(_RanIt _First, _RanIt _Last, _Pr _Pred) {
   return ParallelSort(_First, _Last, _Pred, IteratorValType(_First));
 }
 
+template <typename T>
+struct fatal_msg_ftor
+{
+    fatal_msg_ftor(const T *y, T ymin, T ymax, int ny, const char *callername, const int i)
+    :  y(y), ymin(ymin), ymax(ymax), ny(ny), callername(callername)
+    {}
+
+    void operator() (const int i)
+    {
+      std::ostringstream os;
+      os << "[%s]: does not tolerate element [#%i = " << y[i] << "] outside [" << ymin << ", " << ymax << "]";
+      Log::Fatal(os.str().c_str(), callername, i);
+    }
+
+    const T *y;
+    const T ymin;
+    const T ymax;
+    const T ny;
+    const char *callername;
+};
+
+
 // Check that all y[] are in interval [ymin, ymax] (end points included); throws error if not
 template <typename T>
 inline static void CheckElementsIntervalClosed(const T *y, T ymin, T ymax, int ny, const char *callername) {
-  auto fatal_msg = [&y, &ymin, &ymax, &callername](int i) { 
-    std::ostringstream os;
-    os << "[%s]: does not tolerate element [#%i = " << y[i] << "] outside [" << ymin << ", " << ymax << "]";
-    Log::Fatal(os.str().c_str(), callername, i);
-  };
+  fatal_msg_ftor<T> fatal_msg(y, ymin, ymax, ny, callername);
   for (int i = 1; i < ny; i += 2) {
     if (y[i - 1] < y[i]) {
       if (y[i - 1] < ymin) {

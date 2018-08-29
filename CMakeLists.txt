@@ -108,7 +108,13 @@ if(USE_HDFS)
 endif(USE_HDFS)
 
 if(UNIX OR MINGW OR CYGWIN)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -pthread -O0 -Wextra -Wall -Wno-ignored-attributes -Wno-unknown-pragmas -Wno-return-type")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -pthread -O3 -Wextra -Wall -Wno-ignored-attributes -Wno-unknown-pragmas -Wno-return-type")
+endif()
+
+set(Boost_USE_STATIC_LIBS ON)
+find_package(Boost REQUIRED COMPONENTS thread)
+if(Boost_FOUND)
+    include_directories(${Boost_INCLUDE_DIRS})
 endif()
 
 if(WIN32 AND MINGW)
@@ -153,12 +159,6 @@ endif(USE_MPI)
 
 file(GLOB SOURCES
     src/application/predictor.hpp
-#    src/boosting/*.cpp
-#    src/metric/*.cpp
-#    src/objective/*.cpp
-#    src/io/*.cpp
-#    src/network/*.cpp
-#    src/treelearner/*.cpp
     src/io/config.cpp
     src/io/config_auto.cpp
     src/boosting/prediction_early_stop.cpp
@@ -170,9 +170,9 @@ file(GLOB SOURCES
     src/io/tree.cpp
 )
 
-add_executable(lightgbm_exe src/main.cpp src/c_api.cpp ${SOURCES})
 add_library(lightgbm SHARED src/c_api.cpp  ${SOURCES})
 target_link_libraries(lightgbm -Wl,--exclude-libs,ALL -Wl,--version-script=${CMAKE_SOURCE_DIR}/lightgbm.lds)
+target_link_libraries(lightgbm -lboost_system)
 
 if(USE_SWIG)
   set_property(SOURCE swig/lightgbmlib.i PROPERTY CPLUSPLUS ON)

@@ -1,7 +1,7 @@
 #include <LightGBM/utils/openmp_wrapper.h>
 
 #include <LightGBM/utils/common.h>
-#include <LightGBM/utils/random.h>
+//#include <LightGBM/utils/random.h>
 #include <LightGBM/utils/threading.h>
 #include <LightGBM/c_api.h>
 #include <LightGBM/boosting.h>
@@ -115,7 +115,7 @@ int LGBM_BoosterLoadModelFromString(
   int* out_num_iterations,
   BoosterHandle* out) {
   API_BEGIN();
-  auto ret = std::unique_ptr<Booster>(new Booster(nullptr));
+  auto ret = std::unique_ptr<Booster>(new Booster(0));
   ret->LoadModelFromString(model_str);
   *out_num_iterations = ret->GetBoosting()->GetCurrentIteration();
   *out = ret.release();
@@ -170,66 +170,94 @@ int LGBM_BoosterPredictForMat(BoosterHandle handle,
 
 // ---- start of some help functions
 
+template <typename PTR_T>
+class row_functor_row_major {
+	const PTR_T *data_ptr_;
+	const int num_col_;
+	const int num_row_;
+public:
+	row_functor_row_major(const PTR_T *data_ptr, const int num_col, const int num_row)
+			: data_ptr_(data_ptr), num_col_(num_col), num_row_(num_row)
+	{}
+
+	std::vector<double> operator() (const int row_idx)
+	{
+		std::vector<double> ret(num_col_);
+		auto tmp_ptr = data_ptr_ + static_cast<size_t>(num_col_) * row_idx;
+		for (int i = 0; i < num_col_; ++i) {
+			ret[i] = static_cast<double>(*(tmp_ptr + i));
+		}
+		return ret;
+	}
+};
+
+template <typename PTR_T>
+class row_functor_col_major {
+	const PTR_T *data_ptr_;
+	const int num_col_;
+	const int num_row_;
+public:
+	row_functor_col_major(const PTR_T *data_ptr, const int num_col, const int num_row)
+			: data_ptr_(data_ptr), num_col_(num_col), num_row_(num_row)
+	{}
+
+	std::vector<double> operator() (const int row_idx)
+	{
+		std::vector<double> ret(num_col_);
+		for (int i = 0; i < num_col_; ++i) {
+			ret[i] = static_cast<double>(*(data_ptr_ + static_cast<size_t>(num_row_) * i + row_idx));
+		}
+		return ret;
+	}
+};
+
 std::function<std::vector<double>(int row_idx)>
 RowFunctionFromDenseMatric(const void* data, int num_row, int num_col, int data_type, int is_row_major) {
   if (data_type == C_API_DTYPE_FLOAT32) {
     const float* data_ptr = reinterpret_cast<const float*>(data);
     if (is_row_major) {
-      return [data_ptr, num_col, num_row] (int row_idx) {
-        std::vector<double> ret(num_col);
-        auto tmp_ptr = data_ptr + static_cast<size_t>(num_col) * row_idx;
-        for (int i = 0; i < num_col; ++i) {
-          ret[i] = static_cast<double>(*(tmp_ptr + i));
-        }
-        return ret;
-      };
+      return row_functor_row_major<float>(data_ptr, num_col, num_row);
     } else {
-      return [data_ptr, num_col, num_row] (int row_idx) {
-        std::vector<double> ret(num_col);
-        for (int i = 0; i < num_col; ++i) {
-          ret[i] = static_cast<double>(*(data_ptr + static_cast<size_t>(num_row) * i + row_idx));
-        }
-        return ret;
-      };
+      return row_functor_col_major<float>(data_ptr, num_col, num_row);
     }
   } else if (data_type == C_API_DTYPE_FLOAT64) {
     const double* data_ptr = reinterpret_cast<const double*>(data);
     if (is_row_major) {
-      return [data_ptr, num_col, num_row] (int row_idx) {
-        std::vector<double> ret(num_col);
-        auto tmp_ptr = data_ptr + static_cast<size_t>(num_col) * row_idx;
-        for (int i = 0; i < num_col; ++i) {
-          ret[i] = static_cast<double>(*(tmp_ptr + i));
-        }
-        return ret;
-      };
+       return row_functor_row_major<double>(data_ptr, num_col, num_row);
     } else {
-      return [data_ptr, num_col, num_row] (int row_idx) {
-        std::vector<double> ret(num_col);
-        for (int i = 0; i < num_col; ++i) {
-          ret[i] = static_cast<double>(*(data_ptr + static_cast<size_t>(num_row) * i + row_idx));
-        }
-        return ret;
-      };
+       return row_functor_col_major<double>(data_ptr, num_col, num_row);
     }
   }
   throw std::runtime_error("Unknown data type in RowFunctionFromDenseMatric");
 }
 
+struct _outer_func_ftor {
+
+	_outer_func_ftor(const std::function<std::vector<double>(int row_idx)> &inner_func)
+			: inner_func_(inner_func)
+	{}
+
+	std::vector<std::pair<int, double>> operator() (const int row_idx)
+	{
+		auto raw_values = inner_func_(row_idx);
+		std::vector<std::pair<int, double>> ret;
+		for (int i = 0; i < static_cast<int>(raw_values.size()); ++i) {
+			if (std::fabs(raw_values[i]) > kZeroThreshold || std::isnan(raw_values[i])) {
+				ret.emplace_back(i, raw_values[i]);
+			}
+		}
+		return ret;
+	};
+
+private:
+	const std::function<std::vector<double>(int row_idx)> inner_func_;
+};
+
 std::function<std::vector<std::pair<int, double>>(int row_idx)>
 RowPairFunctionFromDenseMatric(const void* data, int num_row, int num_col, int data_type, int is_row_major) {
   auto inner_function = RowFunctionFromDenseMatric(data, num_row, num_col, data_type, is_row_major);
-  if (inner_function != nullptr) {
-    return [inner_function] (int row_idx) {
-      auto raw_values = inner_function(row_idx);
-      std::vector<std::pair<int, double>> ret;
-      for (int i = 0; i < static_cast<int>(raw_values.size()); ++i) {
-        if (std::fabs(raw_values[i]) > kZeroThreshold || std::isnan(raw_values[i])) {
-          ret.emplace_back(i, raw_values[i]);
-        }
-      }
-      return ret;
-    };
+  if (inner_function != 0) {
+    return _outer_func_ftor(inner_function);
   }
-  return nullptr;
+  return NULL;
 }
