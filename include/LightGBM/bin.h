@@ -26,12 +26,18 @@ enum MissingType {
 /*! \brief Store data for one histogram bin */
 struct HistogramBinEntry {
 public:
+    HistogramBinEntry()
+            :
+    sum_gradients(0.0f),
+    sum_hessians(0.0f),
+    cnt(0)
+    {}
   /*! \brief Sum of gradients on this bin */
-  double sum_gradients = 0.0f;
+  double sum_gradients;
   /*! \brief Sum of hessians on this bin */
-  double sum_hessians = 0.0f;
+  double sum_hessians;
   /*! \brief Number of data on this bin */
-  data_size_t cnt = 0;
+  data_size_t cnt;
   /*!
   * \brief Sum up (reducers) functions for histogram bin
   */
@@ -94,11 +100,6 @@ public:
   inline bool is_trival() const { return is_trival_; }
   /*! \brief Sparsity of this bin ( num_zero_bins / num_data ) */
   inline double sparse_rate() const { return sparse_rate_; }
-  /*!
-  * \brief Save binary data to file
-  * \param file File want to write
-  */
-  void SaveBinaryToFile(const VirtualFileWriter* writer) const;
   /*!
   * \brief Mapping bin into feature value
   * \param bin
@@ -303,12 +304,6 @@ public:
   * \return Iterator of this bin
   */
   virtual BinIterator* GetIterator(uint32_t min_bin, uint32_t max_bin, uint32_t default_bin) const = 0;
-
-  /*!
-  * \brief Save binary data to file
-  * \param file File want to write
-  */
-  virtual void SaveBinaryToFile(const VirtualFileWriter* writer) const = 0;
 
   /*!
   * \brief Load from memory

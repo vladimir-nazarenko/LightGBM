@@ -3,8 +3,6 @@
 #include <LightGBM/utils/threading.h>
 #include <LightGBM/utils/common.h>
 
-#include <LightGBM/dataset.h>
-
 #include <sstream>
 #include <unordered_map>
 #include <functional>
@@ -48,55 +46,6 @@ Tree::~Tree() {
 
 }
 
-int Tree::Split(int leaf, int feature, int real_feature, uint32_t threshold_bin,
-                double threshold_double, double left_value, double right_value,
-                int left_cnt, int right_cnt, float gain, MissingType missing_type, bool default_left) {
-  Split(leaf, feature, real_feature, left_value, right_value, left_cnt, right_cnt, gain);
-  int new_node_idx = num_leaves_ - 1;
-  decision_type_[new_node_idx] = 0;
-  SetDecisionType(&decision_type_[new_node_idx], false, kCategoricalMask);
-  SetDecisionType(&decision_type_[new_node_idx], default_left, kDefaultLeftMask);
-  if (missing_type == MissingType::None) {
-    SetMissingType(&decision_type_[new_node_idx], 0);
-  } else if (missing_type == MissingType::Zero) {
-    SetMissingType(&decision_type_[new_node_idx], 1);
-  } else if (missing_type == MissingType::NaN) {
-    SetMissingType(&decision_type_[new_node_idx], 2);
-  }
-  threshold_in_bin_[new_node_idx] = threshold_bin;
-  threshold_[new_node_idx] = Common::AvoidInf(threshold_double);
-  ++num_leaves_;
-  return num_leaves_ - 1;
-}
-
-int Tree::SplitCategorical(int leaf, int feature, int real_feature, const uint32_t* threshold_bin, int num_threshold_bin,
-                           const uint32_t* threshold, int num_threshold, double left_value, double right_value,
-                           data_size_t left_cnt, data_size_t right_cnt, float gain, MissingType missing_type) {
-  Split(leaf, feature, real_feature, left_value, right_value, left_cnt, right_cnt, gain);
-  int new_node_idx = num_leaves_ - 1;
-  decision_type_[new_node_idx] = 0;
-  SetDecisionType(&decision_type_[new_node_idx], true, kCategoricalMask);
-  if (missing_type == MissingType::None) {
-    SetMissingType(&decision_type_[new_node_idx], 0);
-  } else if (missing_type == MissingType::Zero) {
-    SetMissingType(&decision_type_[new_node_idx], 1);
-  } else if (missing_type == MissingType::NaN) {
-    SetMissingType(&decision_type_[new_node_idx], 2);
-  }
-  threshold_in_bin_[new_node_idx] = num_cat_;
-  threshold_[new_node_idx] = num_cat_;
-  ++num_cat_;
-  cat_boundaries_.push_back(cat_boundaries_.back() + num_threshold);
-  for (int i = 0; i < num_threshold; ++i) {
-    cat_threshold_.push_back(threshold[i]);
-  }
-  cat_boundaries_inner_.push_back(cat_boundaries_inner_.back() + num_threshold_bin);
-  for (int i = 0; i < num_threshold_bin; ++i) {
-    cat_threshold_inner_.push_back(threshold_bin[i]);
-  }
-  ++num_leaves_;
-  return num_leaves_ - 1;
-}
 
 #define PredictionFun(niter, fidx_in_iter, start_pos, decision_fun, iter_idx, data_idx) \
 std::vector<std::unique_ptr<BinIterator>> iter((niter)); \
@@ -111,100 +60,6 @@ for (data_size_t i = start; i < end; ++i) {\
   }\
   score[(data_idx)] += static_cast<double>(leaf_value_[~node]);\
 }\
-
-void Tree::AddPredictionToScore(const Dataset* data, data_size_t num_data, double* score) const {
-  if (num_leaves_ <= 1) {
-    if (leaf_value_[0] != 0.0f) {
-      #pragma omp parallel for schedule(static)
-      for (data_size_t i = 0; i < num_data; ++i) {
-        score[i] += leaf_value_[0];
-      }
-    }
-    return;
-  }
-  std::vector<uint32_t> default_bins(num_leaves_ - 1);
-  std::vector<uint32_t> max_bins(num_leaves_ - 1);
-  for (int i = 0; i < num_leaves_ - 1; ++i) {
-    const int fidx = split_feature_inner_[i];
-    auto bin_mapper = data->FeatureBinMapper(fidx);
-    default_bins[i] = bin_mapper->GetDefaultBin();
-    max_bins[i] = bin_mapper->num_bin() - 1;
-  }
-  if (num_cat_ > 0) {
-    if (data->num_features() > num_leaves_ - 1) {
-      Threading::For<data_size_t>(0, num_data, [this, &data, score, &default_bins, &max_bins]
-      (int, data_size_t start, data_size_t end) {
-        PredictionFun(num_leaves_ - 1, split_feature_inner_[i], start, DecisionInner, node, i);
-      });
-    } else {
-      Threading::For<data_size_t>(0, num_data, [this, &data, score, &default_bins, &max_bins]
-      (int, data_size_t start, data_size_t end) {
-        PredictionFun(data->num_features(), i, start, DecisionInner, split_feature_inner_[node], i);
-      });
-    }
-  } else {
-    if (data->num_features() > num_leaves_ - 1) {
-      Threading::For<data_size_t>(0, num_data, [this, &data, score, &default_bins, &max_bins]
-      (int, data_size_t start, data_size_t end) {
-        PredictionFun(num_leaves_ - 1, split_feature_inner_[i], start, NumericalDecisionInner, node, i);
-      });
-    } else {
-      Threading::For<data_size_t>(0, num_data, [this, &data, score, &default_bins, &max_bins]
-      (int, data_size_t start, data_size_t end) {
-        PredictionFun(data->num_features(), i, start, NumericalDecisionInner, split_feature_inner_[node], i);
-      });
-    }
-  }
-}
-
-void Tree::AddPredictionToScore(const Dataset* data,
-                                const data_size_t* used_data_indices,
-                                data_size_t num_data, double* score) const {
-  if (num_leaves_ <= 1) {
-    if (leaf_value_[0] != 0.0f) {
-      #pragma omp parallel for schedule(static)
-      for (data_size_t i = 0; i < num_data; ++i) {
-        score[used_data_indices[i]] += leaf_value_[0];
-      }
-    }
-    return;
-  }
-  std::vector<uint32_t> default_bins(num_leaves_ - 1);
-  std::vector<uint32_t> max_bins(num_leaves_ - 1);
-  for (int i = 0; i < num_leaves_ - 1; ++i) {
-    const int fidx = split_feature_inner_[i];
-    auto bin_mapper = data->FeatureBinMapper(fidx);
-    default_bins[i] = bin_mapper->GetDefaultBin();
-    max_bins[i] = bin_mapper->num_bin() - 1;
-  }
-  if (num_cat_ > 0) {
-    if (data->num_features() > num_leaves_ - 1) {
-      Threading::For<data_size_t>(0, num_data, [this, &data, score, used_data_indices, &default_bins, &max_bins]
-      (int, data_size_t start, data_size_t end) {
-        PredictionFun(num_leaves_ - 1, split_feature_inner_[i], used_data_indices[start], DecisionInner, node, used_data_indices[i]);
-      });
-    } else {
-      Threading::For<data_size_t>(0, num_data, [this, &data, score, used_data_indices, &default_bins, &max_bins]
-      (int, data_size_t start, data_size_t end) {
-        PredictionFun(data->num_features(), i, used_data_indices[start], DecisionInner, split_feature_inner_[node], used_data_indices[i]);
-      });
-    }
-  } else {
-    if (data->num_features() > num_leaves_ - 1) {
-      Threading::For<data_size_t>(0, num_data, [this, &data, score, used_data_indices, &default_bins, &max_bins]
-      (int, data_size_t start, data_size_t end) {
-        PredictionFun(num_leaves_ - 1, split_feature_inner_[i], used_data_indices[start], NumericalDecisionInner, node, used_data_indices[i]);
-      });
-    } else {
-      Threading::For<data_size_t>(0, num_data, [this, &data, score, used_data_indices, &default_bins, &max_bins]
-      (int, data_size_t start, data_size_t end) {
-        PredictionFun(data->num_features(), i, used_data_indices[start], NumericalDecisionInner, split_feature_inner_[node], used_data_indices[i]);
-      });
-    }
-  }
-}
-
-#undef PredictionFun
 
 std::string Tree::ToString() const {
   std::stringstream str_buf;
@@ -238,21 +93,6 @@ std::string Tree::ToString() const {
   }
   str_buf << "shrinkage=" << shrinkage_ << '\n';
   str_buf << '\n';
-  return str_buf.str();
-}
-
-std::string Tree::ToJSON() const {
-  std::stringstream str_buf;
-  str_buf << std::setprecision(std::numeric_limits<double>::digits10 + 2);
-  str_buf << "\"num_leaves\":" << num_leaves_ << "," << '\n';
-  str_buf << "\"num_cat\":" << num_cat_ << "," << '\n';
-  str_buf << "\"shrinkage\":" << shrinkage_ << "," << '\n';
-  if (num_leaves_ == 1) {
-    str_buf << "\"tree_structure\":{" << "\"leaf_value\":" << leaf_value_[0] << "}" << '\n';
-  } else {
-    str_buf << "\"tree_structure\":" << NodeToJSON(0) << '\n';
-  }
-
   return str_buf.str();
 }
 

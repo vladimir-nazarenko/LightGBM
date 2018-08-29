@@ -26,6 +26,109 @@ const int kDefaultNumLeaves = 31;
 
 struct Config {
 public:
+  Config()
+          :
+    config(""),
+    task(TaskType::kTrain),
+    objective("regression"),
+    boosting("gbdt"),
+    data(""),
+    num_iterations(100),
+    learning_rate(0.1),
+    num_leaves(kDefaultNumLeaves),
+    tree_learner("serial"),
+    num_threads(0),
+    device_type("cpu"),
+    seed(0),
+    max_depth(-1),
+    min_data_in_leaf(20),
+    min_sum_hessian_in_leaf(1e-3),
+    bagging_fraction(1.0),
+    bagging_freq(0),
+    bagging_seed(3),
+    feature_fraction(1.0),
+    feature_fraction_seed(2),
+    early_stopping_round(0),
+    max_delta_step(0.0),
+    lambda_l1(0.0),
+    lambda_l2(0.0),
+    min_gain_to_split(0.0),
+    drop_rate(0.1),
+    max_drop(50),
+    skip_drop(0.5),
+    xgboost_dart_mode(false),
+    uniform_drop(false),
+    drop_seed(4),
+    top_rate(0.2),
+    other_rate(0.1),
+    min_data_per_group(100),
+    max_cat_threshold(32),
+    cat_l2(10.0),
+    cat_smooth(10.0),
+    max_cat_to_onehot(4),
+    top_k(20),
+    forcedsplits_filename(""),
+    verbosity(1),
+    max_bin(255),
+    min_data_in_bin(3),
+    bin_construct_sample_cnt(200000),
+    histogram_pool_size(-1.0),
+    data_random_seed(1),
+    output_model("LightGBM_model.txt"),
+    snapshot_freq(-1),
+    input_model(""),
+    output_result("LightGBM_predict_result.txt"),
+    initscore_filename(""),
+    pre_partition(false),
+    enable_bundle(true),
+    max_conflict_rate(0.0),
+    is_enable_sparse(true),
+    sparse_threshold(0.8),
+    use_missing(true),
+    zero_as_missing(false),
+    two_round(false),
+    save_binary(false),
+    enable_load_from_binary_file(true),
+    header(false),
+    label_column(""),
+    weight_column(""),
+    group_column(""),
+    ignore_column(""),
+    categorical_feature(""),
+    predict_raw_score(false),
+    predict_leaf_index(false),
+    predict_contrib(false),
+    num_iteration_predict(-1),
+    pred_early_stop(false),
+    pred_early_stop_freq(10),
+    pred_early_stop_margin(10.0),
+    convert_model_language(""),
+    convert_model("gbdt_prediction.cpp"),
+    num_class(1),
+    is_unbalance(false),
+    scale_pos_weight(1.0),
+    sigmoid(1.0),
+    boost_from_average(true),
+    reg_sqrt(false),
+    alpha(0.9),
+    fair_c(1.0),
+    poisson_max_delta_step(0.7),
+    tweedie_variance_power(1.5),
+    max_position(20),
+    metric_freq(1),
+    is_provide_training_metric(false),
+    num_machines(1),
+    local_listen_port(12400),
+    time_out(120),
+    machine_list_filename(""),
+    machines(""),
+    gpu_platform_id(-1),
+    gpu_device_id(-1),
+    gpu_use_dp(false),
+    is_parallel(false),
+    is_parallel_find_bin(false)
+  {}
+
   std::string ToString() const;
   /*!
   * \brief Get string value by specific name of key
@@ -82,7 +185,7 @@ public:
   // alias = config_file
   // desc = path of config file
   // desc = **Note**: can be used only in CLI version
-  std::string config = "";
+  std::string config;
 
   // [doc-only]
   // type = enum
@@ -94,7 +197,7 @@ public:
   // desc = ``convert_model``, for converting model file into if-else format, see more information in `IO Parameters <#io-parameters>`__
   // desc = ``refit``, for refitting existing models with new data, aliases: ``refit_tree``
   // desc = **Note**: can be used only in CLI version
-  TaskType task = TaskType::kTrain;
+  TaskType task;
 
   // [doc-only]
   // type = enum
@@ -123,7 +226,7 @@ public:
   // descl2 = label should be ``int`` type in lambdarank tasks, and larger number represents the higher relevance (e.g. 0:bad, 1:fair, 2:good, 3:perfect)
   // descl2 = `label_gain <#objective-parameters>`__ can be used to set the gain (weight) of ``int`` label
   // descl2 = all values in ``label`` must be smaller than number of elements in ``label_gain``
-  std::string objective = "regression";
+  std::string objective;
 
   // [doc-only]
   // type = enum
@@ -133,12 +236,12 @@ public:
   // desc = ``rf``, Random Forest, aliases: ``random_forest``
   // desc = ``dart``, `Dropouts meet Multiple Additive Regression Trees <https://arxiv.org/abs/1505.01866>`__
   // desc = ``goss``, Gradient-based One-Side Sampling
-  std::string boosting = "gbdt";
+  std::string boosting;
 
   // alias = train, train_data, train_data_file, data_filename
   // desc = path of training data, LightGBM will train from this data
   // desc = **Note**: can be used only in CLI version
-  std::string data = "";
+  std::string data;
 
   // alias = test, valid_data, valid_data_file, test_data, test_data_file, valid_filenames
   // default = ""
@@ -151,19 +254,19 @@ public:
   // check = >=0
   // desc = number of boosting iterations
   // desc = **Note**: internally, LightGBM constructs ``num_class * num_iterations`` trees for multi-class classification problems
-  int num_iterations = 100;
+  int num_iterations;
 
   // alias = shrinkage_rate, eta
   // check = >0.0
   // desc = shrinkage rate
   // desc = in ``dart``, it also affects on normalization weights of dropped trees
-  double learning_rate = 0.1;
+  double learning_rate;
 
   // default = 31
   // alias = num_leaf, max_leaves, max_leaf
   // check = >1
   // desc = max number of leaves in one tree
-  int num_leaves = kDefaultNumLeaves;
+  int num_leaves;
 
   // [doc-only]
   // type = enum
@@ -174,7 +277,7 @@ public:
   // desc = ``data``, data parallel tree learner, aliases: ``data_parallel``
   // desc = ``voting``, voting parallel tree learner, aliases: ``voting_parallel``
   // desc = refer to `Parallel Learning Guide <./Parallel-Learning-Guide.rst>`__ to get more details
-  std::string tree_learner = "serial";
+  std::string tree_learner;
 
   // alias = num_thread, nthread, nthreads, n_jobs
   // desc = number of threads for LightGBM
@@ -183,7 +286,7 @@ public:
   // desc = do not set it too large if your dataset is small (for instance, do not use 64 threads for a dataset with 10,000 rows)
   // desc = be aware a task manager or any similar CPU monitoring tool might report that cores not being fully utilized. **This is normal**
   // desc = for parallel learning, do not use all CPU cores because this will cause poor performance for the network communication
-  int num_threads = 0;
+  int num_threads;
 
   // [doc-only]
   // type = enum
@@ -193,13 +296,13 @@ public:
   // desc = **Note**: it is recommended to use the smaller ``max_bin`` (e.g. 63) to get the better speed up
   // desc = **Note**: for the faster speed, GPU uses 32-bit float point to sum up by default, so this may affect the accuracy for some tasks. You can set ``gpu_use_dp=true`` to enable 64-bit float point, but it will slow down the training
   // desc = **Note**: refer to `Installation Guide <./Installation-Guide.rst#build-gpu-version>`__ to build LightGBM with GPU support
-  std::string device_type = "cpu";
+  std::string device_type;
 
   // [doc-only]
   // alias = random_seed, random_state
   // desc = this seed is used to generate other seeds, e.g. ``data_random_seed``, ``feature_fraction_seed``
   // desc = will be overridden, if you set other seeds
-  int seed = 0;
+  int seed;
 
   #pragma endregion
 
@@ -207,17 +310,17 @@ public:
 
   // desc = limit the max depth for tree model. This is used to deal with over-fitting when ``#data`` is small. Tree still grows leaf-wise
   // desc = ``< 0`` means no limit
-  int max_depth = -1;
+  int max_depth;
 
   // alias = min_data_per_leaf, min_data, min_child_samples
   // check = >=0
   // desc = minimal number of data in one leaf. Can be used to deal with over-fitting
-  int min_data_in_leaf = 20;
+  int min_data_in_leaf;
 
   // alias = min_sum_hessian_per_leaf, min_sum_hessian, min_hessian, min_child_weight
   // check = >=0.0
   // desc = minimal sum hessian in one leaf. Like ``min_data_in_leaf``, it can be used to deal with over-fitting
-  double min_sum_hessian_in_leaf = 1e-3;
+  double min_sum_hessian_in_leaf;
 
   // alias = sub_row, subsample, bagging
   // check = >0.0
@@ -226,17 +329,17 @@ public:
   // desc = can be used to speed up training
   // desc = can be used to deal with over-fitting
   // desc = **Note**: to enable bagging, ``bagging_freq`` should be set to a non zero value as well
-  double bagging_fraction = 1.0;
+  double bagging_fraction;
 
   // alias = subsample_freq
   // desc = frequency for bagging
-  // desc = ``0`` means disable bagging; ``k`` means perform bagging at every ``k`` iteration
+  // desc; ``k`` means perform bagging at every ``k`` iteration
   // desc = **Note**: to enable bagging, ``bagging_fraction`` should be set to value smaller than ``1.0`` as well
-  int bagging_freq = 0;
+  int bagging_freq;
 
   // alias = bagging_fraction_seed
   // desc = random seed for bagging
-  int bagging_seed = 3;
+  int bagging_seed;
 
   // alias = sub_feature, colsample_bytree
   // check = >0.0
@@ -244,107 +347,107 @@ public:
   // desc = LightGBM will randomly select part of features on each iteration if ``feature_fraction`` smaller than ``1.0``. For example, if you set it to ``0.8``, LightGBM will select 80% of features before training each tree
   // desc = can be used to speed up training
   // desc = can be used to deal with over-fitting
-  double feature_fraction = 1.0;
+  double feature_fraction;
 
   // desc = random seed for ``feature_fraction``
-  int feature_fraction_seed = 2;
+  int feature_fraction_seed;
 
   // alias = early_stopping_rounds, early_stopping
   // desc = will stop training if one metric of one validation data doesn't improve in last ``early_stopping_round`` rounds
   // desc = ``<= 0`` means disable
-  int early_stopping_round = 0;
+  int early_stopping_round;
 
   // alias = max_tree_output, max_leaf_output
   // desc = used to limit the max output of tree leaves
   // desc = ``<= 0`` means no constraint
   // desc = the final max output of leaves is ``learning_rate * max_delta_step``
-  double max_delta_step = 0.0;
+  double max_delta_step;
 
   // alias = reg_alpha
   // check = >=0.0
   // desc = L1 regularization
-  double lambda_l1 = 0.0;
+  double lambda_l1;
 
   // alias = reg_lambda, lambda
   // check = >=0.0
   // desc = L2 regularization
-  double lambda_l2 = 0.0;
+  double lambda_l2;
 
   // alias = min_split_gain
   // check = >=0.0
   // desc = the minimal gain to perform split
-  double min_gain_to_split = 0.0;
+  double min_gain_to_split;
 
   // alias = rate_drop
   // check = >=0.0
   // check = <=1.0
   // desc = used only in ``dart``
   // desc = dropout rate: a fraction of previous trees to drop during the dropout
-  double drop_rate = 0.1;
+  double drop_rate;
 
   // desc = used only in ``dart``
   // desc = max number of dropped trees during one boosting iteration
   // desc = ``<=0`` means no limit
-  int max_drop = 50;
+  int max_drop;
 
   // check = >=0.0
   // check = <=1.0
   // desc = used only in ``dart``
   // desc = probability of skipping the dropout procedure during a boosting iteration
-  double skip_drop = 0.5;
+  double skip_drop;
 
   // desc = used only in ``dart``
   // desc = set this to ``true``, if you want to use xgboost dart mode
-  bool xgboost_dart_mode = false;
+  bool xgboost_dart_mode;
 
   // desc = used only in ``dart``
   // desc = set this to ``true``, if you want to use uniform drop
-  bool uniform_drop = false;
+  bool uniform_drop;
 
   // desc = used only in ``dart``
   // desc = random seed to choose dropping models
-  int drop_seed = 4;
+  int drop_seed;
 
   // check = >=0.0
   // check = <=1.0
   // desc = used only in ``goss``
   // desc = the retain ratio of large gradient data
-  double top_rate = 0.2;
+  double top_rate;
 
   // check = >=0.0
   // check = <=1.0
   // desc = used only in ``goss``
   // desc = the retain ratio of small gradient data
-  double other_rate = 0.1;
+  double other_rate;
 
   // check = >0
   // desc = minimal number of data per categorical group
-  int min_data_per_group = 100;
+  int min_data_per_group;
 
   // check = >0
   // desc = used for the categorical features
   // desc = limit the max threshold points in categorical features
-  int max_cat_threshold = 32;
+  int max_cat_threshold;
 
   // check = >=0.0
   // desc = used for the categorical features
   // desc = L2 regularization in categorcial split
-  double cat_l2 = 10.0;
+  double cat_l2;
 
   // check = >=0.0
   // desc = used for the categorical features
   // desc = this can reduce the effect of noises in categorical features, especially for categories with few data
-  double cat_smooth = 10.0;
+  double cat_smooth;
   
   // check = >0
   // desc = when number of categories of one feature smaller than or equal to ``max_cat_to_onehot``, one-vs-other split algorithm will be used
-  int max_cat_to_onehot = 4;
+  int max_cat_to_onehot;
 
   // alias = topk
   // check = >0
   // desc = used in `Voting parallel <./Parallel-Learning-Guide.rst#choose-appropriate-parallel-algorithm>`__
   // desc = set this to larger value for more accurate result, but it will slow down the training speed
-  int top_k = 20;
+  int top_k;
 
   // type = multi-int
   // alias = mc, monotone_constraint
@@ -366,7 +469,7 @@ public:
   // desc = ``.json`` file can be arbitrarily nested, and each split contains ``feature``, ``threshold`` fields, as well as ``left`` and ``right`` fields representing subsplits
   // desc = categorical splits are forced in a one-hot fashion, with ``left`` representing the split containing the feature value and ``right`` representing other values
   // desc = see `this file <https://github.com/Microsoft/LightGBM/tree/master/examples/binary_classification/forced_splits.json>`__ as an example
-  std::string forcedsplits_filename = "";
+  std::string forcedsplits_filename;
 
   #pragma endregion
 
@@ -375,63 +478,63 @@ public:
   // alias = verbose
   // desc = controls the level of LightGBM's verbosity
   // desc = ``< 0``: Fatal, ``= 0``: Error (Warn), ``> 0``: Info
-  int verbosity = 1;
+  int verbosity;
 
   // check = >1
   // desc = max number of bins that feature values will be bucketed in
   // desc = small number of bins may reduce training accuracy but may increase general power (deal with over-fitting)
   // desc = LightGBM will auto compress memory according to ``max_bin``. For example, LightGBM will use ``uint8_t`` for feature value if ``max_bin=255``
-  int max_bin = 255;
+  int max_bin;
 
   // check = >0
   // desc = minimal number of data inside one bin
   // desc = use this to avoid one-data-one-bin (potential over-fitting)
-  int min_data_in_bin = 3;
+  int min_data_in_bin;
 
   // alias = subsample_for_bin
   // check = >0
   // desc = number of data that sampled to construct histogram bins
   // desc = setting this to larger value will give better training result, but will increase data loading time
   // desc = set this to larger value if data is very sparse
-  int bin_construct_sample_cnt = 200000;
+  int bin_construct_sample_cnt;
 
   // alias = hist_pool_size
   // desc = max cache size in MB for historical histogram
   // desc = ``< 0`` means no limit
-  double histogram_pool_size = -1.0;
+  double histogram_pool_size;
 
   // alias = data_seed
   // desc = random seed for data partition in parallel learning (excluding the ``feature_parallel`` mode)
-  int data_random_seed = 1;
+  int data_random_seed;
 
   // alias = model_output, model_out
   // desc = filename of output model in training
   // desc = **Note**: can be used only in CLI version
-  std::string output_model = "LightGBM_model.txt";
+  std::string output_model;
 
   // alias = save_period
   // desc = frequency of saving model file snapshot
   // desc = set this to positive value to enable this function. For example, the model file will be snapshotted at each iteration if ``snapshot_freq=1``
   // desc = **Note**: can be used only in CLI version
-  int snapshot_freq = -1;
+  int snapshot_freq;
 
   // alias = model_input, model_in
   // desc = filename of input model
   // desc = for ``prediction`` task, this model will be applied to prediction data
   // desc = for ``train`` task, training will be continued from this model
   // desc = **Note**: can be used only in CLI version
-  std::string input_model = "";
+  std::string input_model;
 
   // alias = predict_result, prediction_result, predict_name, prediction_name, pred_name, name_pred
   // desc = filename of prediction result in ``prediction`` task
   // desc = **Note**: can be used only in CLI version
-  std::string output_result = "LightGBM_predict_result.txt";
+  std::string output_result;
 
   // alias = init_score_filename, init_score_file, init_score, input_init_score
   // desc = path of file with training initial scores
   // desc = if ``""``, will use ``train_data_file`` + ``.init`` (if exists)
   // desc = **Note**: can be used only in CLI version
-  std::string initscore_filename = "";
+  std::string initscore_filename;
 
   // alias = valid_data_init_scores, valid_init_score_file, valid_init_score
   // default = ""
@@ -444,60 +547,60 @@ public:
   // alias = is_pre_partition
   // desc = used for parallel learning (excluding the ``feature_parallel`` mode)
   // desc = ``true`` if training data are pre-partitioned, and different machines use different partitions
-  bool pre_partition = false;
+  bool pre_partition;
 
   // alias = is_enable_bundle, bundle
   // desc = set this to ``false`` to disable Exclusive Feature Bundling (EFB), which is described in `LightGBM: A Highly Efficient Gradient Boosting Decision Tree <https://papers.nips.cc/paper/6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree>`__
   // desc = **Note**: disabling this may cause the slow training speed for sparse datasets
-  bool enable_bundle = true;
+  bool enable_bundle;
 
   // check = >=0.0
   // check = <1.0
   // desc = max conflict rate for bundles in EFB
   // desc = set this to ``0.0`` to disallow the conflict and provide more accurate results
   // desc = set this to a larger value to achieve faster speed
-  double max_conflict_rate = 0.0;
+  double max_conflict_rate;
 
   // alias = is_sparse, enable_sparse, sparse
   // desc = used to enable/disable sparse optimization
-  bool is_enable_sparse = true;
+  bool is_enable_sparse;
 
   // check = >0.0
   // check = <=1.0
   // desc = the threshold of zero elements precentage for treating a feature as a sparse one
-  double sparse_threshold = 0.8;
+  double sparse_threshold;
 
   // desc = set this to ``false`` to disable the special handle of missing value
-  bool use_missing = true;
+  bool use_missing;
 
   // desc = set this to ``true`` to treat all zero as missing values (including the unshown values in libsvm/sparse matrics)
   // desc = set this to ``false`` to use ``na`` for representing missing values
-  bool zero_as_missing = false;
+  bool zero_as_missing;
 
   // alias = two_round_loading, use_two_round_loading
   // desc = set this to ``true`` if data file is too big to fit in memory
   // desc = by default, LightGBM will map data file to memory and load features from memory. This will provide faster data loading speed, but may cause run out of memory error when the data file is very big
-  bool two_round = false;
+  bool two_round;
 
   // alias = is_save_binary, is_save_binary_file
   // desc = if ``true``, LightGBM will save the dataset (including validation data) to a binary file. This speed ups the data loading for the next time
-  bool save_binary = false;
+  bool save_binary;
 
   // alias = load_from_binary_file, binary_load, load_binary
   // desc = set this to ``true`` to enable autoloading from previous saved binary datasets
   // desc = set this to ``false`` to ignore binary datasets
-  bool enable_load_from_binary_file = true;
+  bool enable_load_from_binary_file;
 
   // alias = has_header
   // desc = set this to ``true`` if input data has header
-  bool header = false;
+  bool header;
 
   // type = int or string
   // alias = label
   // desc = used to specify the label column
   // desc = use number for index, e.g. ``label=0`` means column\_0 is the label
   // desc = add a prefix ``name:`` for column name, e.g. ``label=name:is_click``
-  std::string label_column = "";
+  std::string label_column;
 
   // type = int or string
   // alias = weight
@@ -505,7 +608,7 @@ public:
   // desc = use number for index, e.g. ``weight=0`` means column\_0 is the weight
   // desc = add a prefix ``name:`` for column name, e.g. ``weight=name:weight``
   // desc = **Note**: index starts from ``0`` and it doesn't count the label column when passing type is ``int``, e.g. when label is column\_0, and weight is column\_1, the correct parameter is ``weight=0``
-  std::string weight_column = "";
+  std::string weight_column;
 
   // type = int or string
   // alias = group, group_id, query_column, query, query_id
@@ -514,7 +617,7 @@ public:
   // desc = add a prefix ``name:`` for column name, e.g. ``query=name:query_id``
   // desc = **Note**: data should be grouped by query\_id
   // desc = **Note**: index starts from ``0`` and it doesn't count the label column when passing type is ``int``, e.g. when label is column\_0 and query\_id is column\_1, the correct parameter is ``query=0``
-  std::string group_column = "";
+  std::string group_column;
 
   // type = multi-int or string
   // alias = ignore_feature, blacklist
@@ -523,7 +626,7 @@ public:
   // desc = add a prefix ``name:`` for column name, e.g. ``ignore_column=name:c1,c2,c3`` means c1, c2 and c3 will be ignored
   // desc = **Note**: works only in case of loading data directly from file
   // desc = **Note**: index starts from ``0`` and it doesn't count the label column when passing type is ``int``
-  std::string ignore_column = "";
+  std::string ignore_column;
 
   // type = multi-int or string
   // alias = cat_feature, categorical_column, cat_column
@@ -534,53 +637,53 @@ public:
   // desc = **Note**: index starts from ``0`` and it doesn't count the label column when passing type is ``int``
   // desc = **Note**: all values should be less than ``Int32.MaxValue`` (2147483647)
   // desc = **Note**: all negative values will be treated as **missing values**
-  std::string categorical_feature = "";
+  std::string categorical_feature;
 
   // alias = is_predict_raw_score, predict_rawscore, raw_score
   // desc = used only in ``prediction`` task
   // desc = set this to ``true`` to predict only the raw scores
   // desc = set this to ``false`` to predict transformed scores
-  bool predict_raw_score = false;
+  bool predict_raw_score;
 
   // alias = is_predict_leaf_index, leaf_index
   // desc = used only in ``prediction`` task
   // desc = set this to ``true`` to predict with leaf index of all trees
-  bool predict_leaf_index = false;
+  bool predict_leaf_index;
 
   // alias = is_predict_contrib, contrib
   // desc = used only in ``prediction`` task
   // desc = set this to ``true`` to estimate `SHAP values <https://arxiv.org/abs/1706.06060>`__, which represent how each feature contributes to each prediction
   // desc = produces ``#features + 1`` values where the last value is the expected value of the model output over the training data
-  bool predict_contrib = false;
+  bool predict_contrib;
 
   // desc = used only in ``prediction`` task
   // desc = used to specify how many trained iterations will be used in prediction
   // desc = ``<= 0`` means no limit
-  int num_iteration_predict = -1;
+  int num_iteration_predict;
 
   // desc = used only in ``prediction`` task
   // desc = if ``true``, will use early-stopping to speed up the prediction. May affect the accuracy
-  bool pred_early_stop = false;
+  bool pred_early_stop;
 
   // desc = used only in ``prediction`` task
   // desc = the frequency of checking early-stopping prediction
-  int pred_early_stop_freq = 10;
+  int pred_early_stop_freq;
 
   // desc = used only in ``prediction`` task
   // desc = the threshold of margin in early-stopping prediction
-  double pred_early_stop_margin = 10.0;
+  double pred_early_stop_margin;
 
   // desc = used only in ``convert_model`` task
   // desc = only ``cpp`` is supported yet
   // desc = if ``convert_model_language`` is set and ``task=train``, the model will be also converted
   // desc = **Note**: can be used only in CLI version
-  std::string convert_model_language = "";
+  std::string convert_model_language;
 
   // alias = convert_model_file
   // desc = used only in ``convert_model`` task
   // desc = output filename of converted model
   // desc = **Note**: can be used only in CLI version
-  std::string convert_model = "gbdt_prediction.cpp";
+  std::string convert_model;
 
   #pragma endregion
 
@@ -589,48 +692,48 @@ public:
   // check = >0
   // alias = num_classes
   // desc = used only in ``multi-class`` classification application
-  int num_class = 1;
+  int num_class;
 
   // alias = unbalance, unbalanced_sets
   // desc = used only in ``binary`` application
   // desc = set this to ``true`` if training data are unbalance
   // desc = **Note**: this parameter cannot be used at the same time with ``scale_pos_weight``, choose only **one** of them
-  bool is_unbalance = false;
+  bool is_unbalance;
 
   // check = >0.0
   // desc = used only in ``binary`` application
   // desc = weight of labels with positive class
   // desc = **Note**: this parameter cannot be used at the same time with ``is_unbalance``, choose only **one** of them
-  double scale_pos_weight = 1.0;
+  double scale_pos_weight;
 
   // check = >0.0
   // desc = used only in ``binary`` and ``multiclassova`` classification and in ``lambdarank`` applications
   // desc = parameter for the sigmoid function
-  double sigmoid = 1.0;
+  double sigmoid;
 
   // desc = used only in ``regression``, ``binary`` and ``cross-entropy`` applications
   // desc = adjusts initial score to the mean of labels for faster convergence
-  bool boost_from_average = true;
+  bool boost_from_average;
 
   // desc = used only in ``regression`` application
   // desc = used to fit ``sqrt(label)`` instead of original values and prediction result will be also automatically converted to ``prediction^2``
   // desc = might be useful in case of large-range labels
-  bool reg_sqrt = false;
+  bool reg_sqrt;
 
   // check = >0.0
   // desc = used only in ``huber`` and ``quantile`` ``regression`` applications
   // desc = parameter for `Huber loss <https://en.wikipedia.org/wiki/Huber_loss>`__ and `Quantile regression <https://en.wikipedia.org/wiki/Quantile_regression>`__
-  double alpha = 0.9;
+  double alpha;
 
   // check = >0.0
   // desc = used only in ``fair`` ``regression`` application
   // desc = parameter for `Fair loss <https://www.kaggle.com/c/allstate-claims-severity/discussion/24520>`__
-  double fair_c = 1.0;
+  double fair_c;
 
   // check = >0.0
   // desc = used only in ``poisson`` ``regression`` application
   // desc = parameter for `Poisson regression <https://en.wikipedia.org/wiki/Poisson_regression>`__ to safeguard optimization
-  double poisson_max_delta_step = 0.7;
+  double poisson_max_delta_step;
 
   // check = >=1.0
   // check = <2.0
@@ -638,12 +741,12 @@ public:
   // desc = used to control the variance of the tweedie distribution
   // desc = set this closer to ``2`` to shift towards a **Gamma** distribution
   // desc = set this closer to ``1`` to shift towards a **Poisson** distribution
-  double tweedie_variance_power = 1.5;
+  double tweedie_variance_power;
 
   // check = >0
   // desc = used only in ``lambdarank`` application
   // desc = optimizes `NDCG <https://en.wikipedia.org/wiki/Discounted_cumulative_gain#Normalized_DCG>`__ at this position
-  int max_position = 20;
+  int max_position;
 
   // type = multi-double
   // default = 0,1,3,7,15,31,63,...,2^30-1
@@ -690,11 +793,11 @@ public:
   // check = >0
   // alias = output_freq
   // desc = frequency for metric output
-  int metric_freq = 1;
+  int metric_freq;
 
   // alias = training_metric, is_training_metric, train_metric
   // desc = set this to ``true`` to output metric result over training dataset
-  bool is_provide_training_metric = false;
+  bool is_provide_training_metric;
 
   // type = multi-int
   // default = 1,2,3,4,5
@@ -711,26 +814,26 @@ public:
   // alias = num_machine
   // desc = the number of machines for parallel learning application
   // desc = this parameter is needed to be set in both **socket** and **mpi** versions
-  int num_machines = 1;
+  int num_machines;
 
   // check = >0
   // alias = local_port, port
   // desc = TCP listen port for local machines
   // desc = **Note**: don't forget to allow this port in firewall settings before training
-  int local_listen_port = 12400;
+  int local_listen_port;
 
   // check = >0
   // desc = socket time-out in minutes
-  int time_out = 120;
+  int time_out;
 
   // alias = machine_list_file, machine_list, mlist
   // desc = path of file that lists machines for this parallel learning application
   // desc = each line contains one IP and one port for one machine. The format is ``ip port`` (space as a separator)
-  std::string machine_list_filename = "";
+  std::string machine_list_filename;
 
   // alias = workers, nodes
   // desc = list of machines in the following format: ``ip1:port1,ip2:port2``
-  std::string machines = "";
+  std::string machines;
 
   #pragma endregion
 
@@ -738,21 +841,21 @@ public:
 
   // desc = OpenCL platform ID. Usually each GPU vendor exposes one OpenCL platform
   // desc = ``-1`` means the system-wide default platform
-  int gpu_platform_id = -1;
+  int gpu_platform_id;
 
   // desc = OpenCL device ID in the specified platform. Each GPU in the selected platform has a unique device ID
   // desc = ``-1`` means the default device in the selected platform
-  int gpu_device_id = -1;
+  int gpu_device_id;
 
   // desc = set this to ``true`` to use double precision math on GPU (by default single precision is used)
-  bool gpu_use_dp = false;
+  bool gpu_use_dp;
 
   #pragma endregion
 
   #pragma endregion
 
-  bool is_parallel = false;
-  bool is_parallel_find_bin = false;
+  bool is_parallel;
+  bool is_parallel_find_bin;
   LIGHTGBM_EXPORT void Set(const std::unordered_map<std::string, std::string>& params);
   static std::unordered_map<std::string, std::string> alias_table;
   static std::unordered_set<std::string> parameter_set;
@@ -838,16 +941,17 @@ struct ParameterAlias {
             tmp_map[alias->second] = pair.first;
           }
         } else { // alias not set
-          tmp_map.emplace(alias->second, pair.first);
+            tmp_map[alias->second] = pair.first;
         }
       } else if (Config::parameter_set.find(pair.first) == Config::parameter_set.end()) {
         Log::Warning("Unknown parameter: %s", pair.first.c_str());
       }
     }
-    for (const auto& pair : tmp_map) {
+    for (auto tmp_map_it = tmp_map.begin(); tmp_map_it != tmp_map.end(); ++tmp_map_it) {
+      const std::pair<std::string, std::string>& pair = *tmp_map_it;
       auto alias = params->find(pair.first);
       if (alias == params->end()) { // not find
-        params->emplace(pair.first, params->at(pair.second));
+        params->insert(std::make_pair(pair.first, params->at(pair.second)));
         params->erase(pair.second);
       } else {
         Log::Warning("%s is set=%s, %s=%s will be ignored. Current value: %s=%s",

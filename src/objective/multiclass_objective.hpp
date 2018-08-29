@@ -38,10 +38,8 @@ public:
 
   }
 
-  void Init(const Metadata& metadata, data_size_t num_data) override {
+  void Init(data_size_t num_data) override {
     num_data_ = num_data;
-    label_ = metadata.label();
-    weights_ = metadata.weights();
     label_int_.resize(num_data_);
     for (int i = 0; i < num_data_; ++i) {
       label_int_[i] = static_cast<int>(label_[i]);
@@ -172,10 +170,10 @@ public:
 
   }
 
-  void Init(const Metadata& metadata, data_size_t num_data) override {
+  void Init(data_size_t num_data) override {
     num_data_ = num_data;
     for (int i = 0; i < num_class_; ++i) {
-      binary_loss_[i]->Init(metadata, num_data);
+      binary_loss_[i]->Init(num_data);
     }
   }
 

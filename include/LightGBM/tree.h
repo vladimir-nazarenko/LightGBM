@@ -2,12 +2,14 @@
 #define LIGHTGBM_TREE_H_
 
 #include <LightGBM/meta.h>
-#include <LightGBM/dataset.h>
+#include <LightGBM/utils/common.h>
 
 #include <string>
 #include <vector>
 #include <memory>
+#include <cmath>
 #include <map>
+#include <unordered_map>
 
 namespace LightGBM {
 
@@ -34,46 +36,6 @@ public:
 
   ~Tree();
 
-  /*!
-  * \brief Performing a split on tree leaves.
-  * \param leaf Index of leaf to be split
-  * \param feature Index of feature; the converted index after removing useless features
-  * \param real_feature Index of feature, the original index on data
-  * \param threshold_bin Threshold(bin) of split
-  * \param threshold_double Threshold on feature value
-  * \param left_value Model Left child output
-  * \param right_value Model Right child output
-  * \param left_cnt Count of left child
-  * \param right_cnt Count of right child
-  * \param gain Split gain
-  * \param missing_type missing type
-  * \param default_left default direction for missing value
-  * \return The index of new leaf.
-  */
-  int Split(int leaf, int feature, int real_feature, uint32_t threshold_bin,
-            double threshold_double, double left_value, double right_value,
-            int left_cnt, int right_cnt, float gain, MissingType missing_type, bool default_left);
-
-  /*!
-  * \brief Performing a split on tree leaves, with categorical feature
-  * \param leaf Index of leaf to be split
-  * \param feature Index of feature; the converted index after removing useless features
-  * \param real_feature Index of feature, the original index on data
-  * \param threshold_bin Threshold(bin) of split, use bitset to represent
-  * \param num_threshold_bin size of threshold_bin
-  * \param threshold Thresholds of real feature value, use bitset to represent
-  * \param num_threshold size of threshold
-  * \param left_value Model Left child output
-  * \param right_value Model Right child output
-  * \param left_cnt Count of left child
-  * \param right_cnt Count of right child
-  * \param gain Split gain
-  * \return The index of new leaf.
-  */
-  int SplitCategorical(int leaf, int feature, int real_feature, const uint32_t* threshold_bin, int num_threshold_bin,
-                       const uint32_t* threshold, int num_threshold, double left_value, double right_value,
-                       int left_cnt, int right_cnt, float gain, MissingType missing_type);
-
   /*! \brief Get the output of one leaf */
   inline double LeafOutput(int leaf) const { return leaf_value_[leaf]; }
 
@@ -81,27 +43,6 @@ public:
   inline void SetLeafOutput(int leaf, double output) {
     leaf_value_[leaf] = output;
   }
-
-  /*!
-  * \brief Adding prediction value of this tree model to scores
-  * \param data The dataset
-  * \param num_data Number of total data
-  * \param score Will add prediction to score
-  */
-  void AddPredictionToScore(const Dataset* data,
-                            data_size_t num_data,
-                            double* score) const;
-
-  /*!
-  * \brief Adding prediction value of this tree model to scorese
-  * \param data The dataset
-  * \param used_data_indices Indices of used data
-  * \param num_data Number of total data
-  * \param score Will add prediction to score
-  */
-  void AddPredictionToScore(const Dataset* data,
-                            const data_size_t* used_data_indices,
-                            data_size_t num_data, double* score) const;
 
   /*!
   * \brief Prediction on one record

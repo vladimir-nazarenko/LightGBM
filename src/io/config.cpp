@@ -20,7 +20,7 @@ void Config::KV2Map(std::unordered_map<std::string, std::string>& params, const 
     if (key.size() > 0) {
       auto value_search = params.find(key);
       if (value_search == params.end()) { // not set
-        params.emplace(key, value);
+        params.insert(std::make_pair(key, value));
       } else {
         Log::Warning("%s is set=%s, %s=%s will be ignored. Current value: %s=%s",
           key.c_str(), value_search->second.c_str(), key.c_str(), value.c_str(),

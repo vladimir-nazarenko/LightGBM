@@ -18,7 +18,7 @@ if(APPLE)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.8.2")
+  if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.4")
     message(FATAL_ERROR "Insufficient gcc version")
   endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
@@ -108,7 +108,7 @@ if(USE_HDFS)
 endif(USE_HDFS)
 
 if(UNIX OR MINGW OR CYGWIN)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -pthread -O3 -Wextra -Wall -Wno-ignored-attributes -Wno-unknown-pragmas -Wno-return-type")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x -pthread -O0 -Wextra -Wall -Wno-ignored-attributes -Wno-unknown-pragmas -Wno-return-type")
 endif()
 
 if(WIN32 AND MINGW)
@@ -152,18 +152,27 @@ if(USE_MPI)
 endif(USE_MPI)
 
 file(GLOB SOURCES
-    src/application/*.cpp
-    src/boosting/*.cpp
-    src/io/*.cpp
-    src/metric/*.cpp
-    src/objective/*.cpp
-    src/network/*.cpp
-    src/treelearner/*.cpp
+    src/application/predictor.hpp
+#    src/boosting/*.cpp
+#    src/metric/*.cpp
+#    src/objective/*.cpp
+#    src/io/*.cpp
+#    src/network/*.cpp
+#    src/treelearner/*.cpp
+    src/io/config.cpp
+    src/io/config_auto.cpp
+    src/boosting/prediction_early_stop.cpp
+    src/boosting/boosting.cpp
+    src/boosting/gbdt.cpp
+    src/boosting/gbdt_prediction.cpp
+    src/boosting/gbdt_model_text.cpp
+    src/objective/objective_function.cpp
+    src/io/tree.cpp
 )
 
-# add_executable(lightgbm src/main.cpp ${SOURCES})
+add_executable(lightgbm_exe src/main.cpp src/c_api.cpp ${SOURCES})
 add_library(lightgbm SHARED src/c_api.cpp  ${SOURCES})
-target_link_libraries(lightgbm -static-libstdc++ -Wl,--exclude-libs,ALL -Wl,--version-script=${CMAKE_SOURCE_DIR}/lightgbm.lds)
+target_link_libraries(lightgbm -Wl,--exclude-libs,ALL -Wl,--version-script=${CMAKE_SOURCE_DIR}/lightgbm.lds)
 
 if(USE_SWIG)
   set_property(SOURCE swig/lightgbmlib.i PROPERTY CPLUSPLUS ON)

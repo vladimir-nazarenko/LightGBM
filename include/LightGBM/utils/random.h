@@ -17,7 +17,9 @@ public:
   /*!
   * \brief Constructor, with random seed
   */
-  Random() {
+  Random()
+    : x(123456789)
+  {
     std::random_device rd;
     auto genrator = std::mt19937(rd());
     std::uniform_int_distribution<int> distribution(0, x);
@@ -104,7 +106,7 @@ private:
     return static_cast<int>(x & 0x7FFFFFFF);
   }
 
-  unsigned int x = 123456789;
+  unsigned int x;
 };
 
 

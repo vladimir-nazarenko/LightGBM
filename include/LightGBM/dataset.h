@@ -2,7 +2,7 @@
 #define LIGHTGBM_DATASET_H_
 
 #include <LightGBM/utils/random.h>
-#include <LightGBM/utils/text_reader.h>
+//#include <LightGBM/utils/text_reader.h>
 #include <LightGBM/utils/openmp_wrapper.h>
 
 #include <LightGBM/meta.h>

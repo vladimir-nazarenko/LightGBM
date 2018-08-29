@@ -8,6 +8,8 @@
 #include <functional>
 #include <memory>
 
+#define override
+
 namespace LightGBM {
 
 /*! \brief Type of data size, it is better to use signed type*/
@@ -42,8 +44,7 @@ const double kZeroThreshold = 1e-35f;
 
 typedef int32_t comm_size_t;
 
-using PredictFunction =
-std::function<void(const std::vector<std::pair<int, double>>&, double* output)>;
+typedef std::function<void(const std::vector<std::pair<int, double>>&, double* output)> PredictFunction;
 
 typedef void(*ReduceFunction)(const char* input, char* output, int type_size, comm_size_t array_size);
 

@@ -66,32 +66,6 @@ public:
     *out_len = nrow * num_pred_in_one_row;
   }
 
-  void Predict(int num_iteration, int predict_type, const char* data_filename,
-               int data_has_header, const Config& config,
-               const char* result_filename) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    bool is_predict_leaf = false;
-    bool is_raw_score = false;
-    bool predict_contrib = false;
-    if (predict_type == C_API_PREDICT_LEAF_INDEX) {
-      is_predict_leaf = true;
-    } else if (predict_type == C_API_PREDICT_RAW_SCORE) {
-      is_raw_score = true;
-    } else if (predict_type == C_API_PREDICT_CONTRIB) {
-      predict_contrib = true;
-    } else {
-      is_raw_score = false;
-    }
-    Predictor predictor(boosting_.get(), num_iteration, is_raw_score, is_predict_leaf, predict_contrib,
-                        config.pred_early_stop, config.pred_early_stop_freq, config.pred_early_stop_margin);
-    bool bool_data_has_header = data_has_header > 0 ? true : false;
-    predictor.Predict(data_filename, result_filename, bool_data_has_header);
-  }
-
-  void GetPredictAt(int data_idx, double* out_result, int64_t* out_len) {
-    boosting_->GetPredictAt(data_idx, out_result, out_len);
-  }
-
   void LoadModelFromString(const char* model_str) {
     size_t len = std::strlen(model_str);
     boosting_->LoadModelFromString(model_str, len);

@@ -12,7 +12,7 @@ struct PredictionEarlyStopInstance {
   /// Callback function type for early stopping.
   /// Takes current prediction and number of elements in prediction
   /// @returns true if prediction should stop according to criterion
-  using FunctionType = std::function<bool(const double*, int)>;
+  typedef std::function<bool(const double*, int)> FunctionType;
 
   FunctionType callback_function;  // callback function itself
   int          round_period;       // call callback_function every `runPeriod` iterations

@@ -3,7 +3,6 @@
 
 #include <LightGBM/meta.h>
 #include <LightGBM/config.h>
-#include <LightGBM/dataset.h>
 #include <functional>
 
 namespace LightGBM {
@@ -20,7 +19,7 @@ public:
   * \param metadata Label data
   * \param num_data Number of data
   */
-  virtual void Init(const Metadata& metadata, data_size_t num_data) = 0;
+  virtual void Init(data_size_t num_data) = 0;
 
   /*!
   * \brief calculating first order derivative of loss function

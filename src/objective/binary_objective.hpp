@@ -45,10 +45,8 @@ public:
 
   ~BinaryLogloss() {}
 
-  void Init(const Metadata& metadata, data_size_t num_data) override {
+  void Init(data_size_t num_data) override {
     num_data_ = num_data;
-    label_ = metadata.label();
-    weights_ = metadata.weights();
     data_size_t cnt_positive = 0;
     data_size_t cnt_negative = 0;
     // count for positive and negative samples
